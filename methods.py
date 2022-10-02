@@ -7,7 +7,6 @@ from dif import *
 __location__ = os.path.realpath(os.path.join(
     os.getcwd(), os.path.dirname(__file__)))
 
-
 def create_db():
     create_inventory_command_string = """
     CREATE TABLE IF NOT EXISTS inventory (
@@ -49,8 +48,8 @@ def load_inventory():
     con = sqlite3.connect('inventory.db')
     con.execute("DELETE FROM inventory")
     cur = con.cursor()
-
-    with open(__location__ + '/inventory.csv', 'r') as fin:  # `with` statement available in 2.5+
+    inv_path = os.path.join(__location__, 'inventory.csv')
+    with open(inv_path, 'r') as fin:  # `with` statement available in 2.5+
         # csv.DictReader uses first line in file for column headings by default
         dr = csv.DictReader(fin)  # comma is default delimiter
         to_db = [
@@ -102,11 +101,9 @@ def load_top_inventory():
     con = sqlite3.connect('inventory.db')
     con.execute("DELETE FROM top_inventory")
     cur = con.cursor()
-
-    with open(__location__ + '/top.dif', 'r') as fin:
+    top_path = os.path.join(__location__, 'top.dif')
+    with open(top_path, 'r') as fin:
         dr = DIF(fin)
-#        print("HEADERS!!!!!!!!!!")
-#        print(dr.header)
         to_db = [
             (
                 i[0],
@@ -169,7 +166,8 @@ def write_joined_data():
     cur = con.cursor()
     cur.execute(join_command)
     output_file_name = "combined_table_" + str(round(time.time())) + ".csv"
-    with open(__location__ + '/' + output_file_name, "w", newline='') as outfile:
-        writer = csv.writer(outfile, delimiter="\t")
+    outfile_path = os.path.join(__location__, output_file_name)
+    with open(outfile_path, "w", newline='') as outfile:
+        writer = csv.writer(outfile, delimiter="|")
         writer.writerow([i[0] for i in cur.description])
         writer.writerows(cur)
