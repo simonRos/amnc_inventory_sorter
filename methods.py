@@ -1,6 +1,7 @@
 import csv
 import os
 import sqlite3
+from dif import *
 
 __location__ = os.path.realpath(os.path.join(
     os.getcwd(), os.path.dirname(__file__)))
@@ -30,11 +31,10 @@ def create_db():
 
     create_top_inventory_command_string = """
     CREATE TABLE IF NOT EXISTS top_inventory (
-        invoitem_invoice_item_id TEXT PRIMARY KEY
-                                    UNIQUE,
-        inv_desc                 TEXT,
-        col_3,
-        col_4
+        invoiceitemid TEXT PRIMARY KEY,
+        description TEXT,
+        compute_0003,
+        compute_0004
     );
     """
 
@@ -102,23 +102,25 @@ def load_top_inventory():
     con.execute("DELETE FROM top_inventory")
     cur = con.cursor()
 
-    with open(__location__ + '/top.xls', 'r') as fin:
-        dr = csv.DictReader(fin)
+    with open(__location__ + '/top.dif', 'r') as fin:
+        dr = DIF(fin)
+#        print("HEADERS!!!!!!!!!!")
+#        print(dr.header)
         to_db = [
             (
-                i['invoitem_invoice_item_id'],
-                i['inv_desc'],
-                i['col_3'],
-                i['col_4']
-            ) for i in dr
+                i[0],
+                i[1],
+                i[2],
+                i[3]
+            ) for i in dr.data
         ]
 
     insert_into_command = """
-    INSERT INTO inventory (
-    invoitem_invoice_item_id,
-    inv_desc,
-    col_3,
-    col_4)
+    INSERT OR IGNORE INTO top_inventory (
+    invoiceitemid,
+    description,
+    compute_0003,
+    compute_0004)
     VALUES (?,?,?,?);
     """
 
