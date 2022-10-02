@@ -6,6 +6,7 @@ def main():
         create_db()
         load_inventory()
         load_top_inventory()
+        write_joined_data()
     except ValueError as ve:
         return str(ve)
 

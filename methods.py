@@ -1,6 +1,7 @@
 import csv
 import os
 import sqlite3
+import time
 from dif import *
 
 __location__ = os.path.realpath(os.path.join(
@@ -127,3 +128,48 @@ def load_top_inventory():
     cur.executemany(insert_into_command, to_db)
     con.commit()
     con.close()
+
+
+def write_joined_data():
+    join_command = """
+    select 
+        i.invoitem_invoice_item_id as "Invoice Item ID",
+        i.item_cost as "Item Cost",
+        i.total_cost as "Total Cost",
+        i.markup as "Markup",
+        i.s_uom as "Item Quantifier",
+        i.auto_calculate,
+        i.loc_group,
+        i.vendor_name as "Vendor Name",
+        i.loc_id,
+        i.average_cost as "Average Cost",
+        i.last_cost as "Last Cost",
+        i.inv_desc as "Item Description",
+        (
+            select
+                t.description
+            where
+                i.inv_desc != t.description
+        ) as "AKA",
+        i.quanitytunitprice as "Quantity Unit Price",
+        i.last_purchase_date as "Last Purchased",
+        i.on_hand as "On Hand",
+        t.compute_0003,
+        t.compute_0004
+    from 
+        top_inventory as t
+    join 
+        inventory as i
+    on 
+        i.invoitem_invoice_item_id = t.invoiceitemid
+    order by
+        i.inv_desc
+    """
+    con = sqlite3.connect('inventory.db')
+    cur = con.cursor()
+    cur.execute(join_command)
+    output_file_name = "combined_table_" + str(round(time.time())) + ".csv"
+    with open(__location__ + '/' + output_file_name, "w", newline='') as outfile:
+        writer = csv.writer(outfile, delimiter="\t")
+        writer.writerow([i[0] for i in cur.description])
+        writer.writerows(cur)
