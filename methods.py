@@ -1,11 +1,17 @@
 import csv
+from fileinput import filename
 import os
 import sqlite3
 import time
+import tkinter
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from dif import *
+
+tkinter.Tk().withdraw()
 
 __location__ = os.path.realpath(os.path.join(
     os.getcwd(), os.path.dirname(__file__)))
+db_path = os.path.join(__location__, 'inventory.db')
 
 def create_db():
     create_inventory_command_string = """
@@ -37,18 +43,18 @@ def create_db():
         compute_0004
     );
     """
-
-    con = sqlite3.connect('./inventory.db')
+    con = sqlite3.connect(db_path)
     with con:
         con.execute(create_inventory_command_string)
         con.execute(create_top_inventory_command_string)
 
 
 def load_inventory():
-    con = sqlite3.connect('inventory.db')
+
+    inv_path = askopenfilename(title="Select inventory file", filetypes=[("csv, *.csv")])
+    con = sqlite3.connect(db_path)
     con.execute("DELETE FROM inventory")
     cur = con.cursor()
-    inv_path = os.path.join(__location__, 'inventory.csv')
     with open(inv_path, 'r') as fin:  # `with` statement available in 2.5+
         # csv.DictReader uses first line in file for column headings by default
         dr = csv.DictReader(fin)  # comma is default delimiter
@@ -91,17 +97,16 @@ def load_inventory():
     on_hand)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
     """
-
     cur.executemany(insert_into_command, to_db)
     con.commit()
     con.close()
 
 
 def load_top_inventory():
-    con = sqlite3.connect('inventory.db')
+    top_path = askopenfilename(title="Select top inventory file", filetypes=[("dif, *.dif")])
+    con = sqlite3.connect(db_path)
     con.execute("DELETE FROM top_inventory")
     cur = con.cursor()
-    top_path = os.path.join(__location__, 'top.dif')
     with open(top_path, 'r') as fin:
         dr = DIF(fin)
         to_db = [
@@ -121,13 +126,14 @@ def load_top_inventory():
     compute_0004)
     VALUES (?,?,?,?);
     """
-
     cur.executemany(insert_into_command, to_db)
     con.commit()
     con.close()
 
 
 def write_joined_data():
+    outfile_path = asksaveasfilename(title="Save output as", filetypes=[("csv, *.csv")], defaultextension=[("csv, *.csv")])
+    #outfile_path = askopenfilename(title="Save output as", filetypes=[("csv, *.csv")])
     join_command = """
     select 
         i.invoitem_invoice_item_id as "Invoice Item ID",
@@ -162,11 +168,11 @@ def write_joined_data():
     order by
         i.inv_desc
     """
-    con = sqlite3.connect('inventory.db')
+    con = sqlite3.connect(db_path)
     cur = con.cursor()
     cur.execute(join_command)
-    output_file_name = "combined_table_" + str(round(time.time())) + ".csv"
-    outfile_path = os.path.join(__location__, output_file_name)
+    #output_file_name = "combined_table_" + str(round(time.time())) + ".csv"
+    #outfile_path = os.path.join(__location__, output_file_name)
     with open(outfile_path, "w", newline='') as outfile:
         writer = csv.writer(outfile, delimiter="|")
         writer.writerow([i[0] for i in cur.description])
