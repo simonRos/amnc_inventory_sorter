@@ -3,6 +3,7 @@ from fileinput import filename
 import os
 import sqlite3
 import tkinter
+import pandas
 from dif import *
 from sqlite_commands import *
 from tkinter.filedialog import askopenfilename, asksaveasfile, asksaveasfilename
@@ -92,10 +93,10 @@ def load_top_inventory():
 def write_joined_data():
     '''Run the join command and write out to a csv file'''
     outfile_path = asksaveasfilename(title="Save output as", filetypes=[
-                                     ("csv, *.csv")], defaultextension=[("csv, *.csv")])
+        ["csv", "*.csv"],
+        ["excel", "*.xlsx *.xls"]
+    ], defaultextension="*.csv")
     con = sqlite3.connect(db_path)
-    cur = con.cursor()
-    cur.execute(join_command)
     # I don't know why but trying to open the file before trying to write to it avoids errno 13
     # I suspect it has something to do with tkinter holding the file open
     try:
@@ -103,7 +104,15 @@ def write_joined_data():
         f.close()
     except Exception as e:
         print(e)
-    with open(outfile_path, mode='w', encoding='utf-8', newline='') as outfile:
-        writer = csv.writer(outfile, delimiter=",")
-        writer.writerow([i[0] for i in cur.description])
-        writer.writerows(cur)
+
+    if outfile_path.split(".")[-1] in ["xlsx", "xls"]:
+        df = pandas.read_sql_query(join_command, con)
+        with pandas.ExcelWriter(outfile_path) as p_writer:
+            df.to_excel(p_writer, index=False)
+    else:
+        cur = con.cursor()
+        cur.execute(join_command)
+        with open(outfile_path, mode='w', encoding='utf-8', newline='') as outfile:
+            writer = csv.writer(outfile, delimiter=",")
+            writer.writerow([i[0] for i in cur.description])
+            writer.writerows(cur)
