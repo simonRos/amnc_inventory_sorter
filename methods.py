@@ -96,12 +96,13 @@ def write_joined_data():
     con = sqlite3.connect(db_path)
     cur = con.cursor()
     cur.execute(join_command)
+    # I don't know why but trying to open the file before trying to write to it avoids errno 13
+    # I suspect it has something to do with tkinter holding the file open
     try:
         f = open(outfile_path)
         f.close()
     except Exception as e:
         print(e)
-        
     with open(outfile_path, mode='w', encoding='utf-8', newline='') as outfile:
         writer = csv.writer(outfile, delimiter="|")
         writer.writerow([i[0] for i in cur.description])
