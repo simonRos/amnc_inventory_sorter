@@ -103,7 +103,7 @@ def write_joined_data():
         f = open(outfile_path)
         f.close()
     except Exception as e:
-        print(e)
+        pass
 
     if outfile_path.split(".")[-1] in ["xlsx", "xls"]:
         df = pandas.read_sql_query(join_command, con)
