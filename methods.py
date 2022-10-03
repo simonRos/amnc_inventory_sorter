@@ -5,7 +5,7 @@ import sqlite3
 import tkinter
 from dif import *
 from sqlite_commands import *
-from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter.filedialog import askopenfilename, asksaveasfile, asksaveasfilename
 
 
 tkinter.Tk().withdraw()
@@ -96,7 +96,13 @@ def write_joined_data():
     con = sqlite3.connect(db_path)
     cur = con.cursor()
     cur.execute(join_command)
-    with open(outfile_path, "w", newline='') as outfile:
+    try:
+        f = open(outfile_path)
+        f.close()
+    except Exception as e:
+        print(e)
+        
+    with open(outfile_path, mode='w', encoding='utf-8', newline='') as outfile:
         writer = csv.writer(outfile, delimiter="|")
         writer.writerow([i[0] for i in cur.description])
         writer.writerows(cur)
