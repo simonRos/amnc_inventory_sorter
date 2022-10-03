@@ -104,6 +104,6 @@ def write_joined_data():
     except Exception as e:
         print(e)
     with open(outfile_path, mode='w', encoding='utf-8', newline='') as outfile:
-        writer = csv.writer(outfile, delimiter="|")
+        writer = csv.writer(outfile, delimiter=",")
         writer.writerow([i[0] for i in cur.description])
         writer.writerows(cur)
